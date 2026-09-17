@@ -1,38 +1,109 @@
 import { useMemo, useState } from 'react'
-import { generateSRS, generateFilename } from '../utils/generateSRS.js'
+import { generateSRS, generateFilename, generateSummary } from '../utils/generateSRS.js'
 import { INDUSTRIES, COUNTRIES } from '../data/industries.js'
 
 export default function StepResult({ data, onBack, onRestart }) {
+  const [confirmed, setConfirmed] = useState(false)
   const [activeTab, setActiveTab] = useState('srs')
-  const result = useMemo(() => generateSRS(data), [data])
-  const { srs, claudeMd } = result
+
+  const summary = useMemo(() => generateSummary(data), [data])
+  const result  = useMemo(() => confirmed ? generateSRS(data) : null, [confirmed])
 
   const industryData = INDUSTRIES.find(i => i.isic === data.industry)
-  const subLabel = industryData?.subIndustries?.find(s => s.value === data.subIndustry)?.label
-  const countryData = COUNTRIES.find(c => c.value === data.country)
   const fname = generateFilename(data.subIndustry, industryData)
 
-  const wordCount = srs.split(/\s+/).length
-  const lineCount = srs.split('\n').length
-
-  function download(content, filename, type = 'text/markdown') {
-    const blob = new Blob([content], { type: `${type};charset=utf-8` })
+  function download(content, filename) {
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    a.href = url; a.download = filename
+    document.body.appendChild(a); a.click()
+    document.body.removeChild(a); URL.revokeObjectURL(url)
   }
 
   function copyActive() {
-    const content = activeTab === 'srs' ? srs : claudeMd
+    const content = activeTab === 'srs' ? result.srs : result.claudeMd
     navigator.clipboard.writeText(content).then(() => alert('Copiado al portapapeles'))
   }
 
-  const activeContent = activeTab === 'srs' ? srs : claudeMd
+  // ── CONFIRMATION SCREEN ──────────────────────────────────────────────────
+  if (!confirmed) {
+    return (
+      <div>
+        <div className="step-header">
+          <div className="step-eyebrow">Paso 4 de 4 — Revisión final</div>
+          <h1 className="step-title">¿Todo listo? Revisa antes de generar</h1>
+          <p className="step-sub">
+            Confirma que esto refleja correctamente tu negocio. Si algo no está bien, puedes volver a ajustarlo.
+          </p>
+        </div>
+
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '.05em', fontSize: 11 }}>Tu sistema en lenguaje simple</div>
+
+          <SummaryRow label="Tipo de negocio" value={summary.business} icon="🏢" />
+          <SummaryRow label="Tamaño" value={summary.size} icon="👥" />
+          <SummaryRow label="Usuarios del sistema" value={summary.roles.join(', ')} icon="🔑" />
+          <SummaryRow label="Usuarios simultáneos estimados" value={`Hasta ${summary.users} personas al mismo tiempo`} icon="🖥️" />
+          <SummaryRow label="Facturación electrónica" value={`Integración con ${summary.tax} (${summary.currency})`} icon="🧾" />
+
+          {summary.extraCountries.length > 0 && (
+            <SummaryRow
+              label="Países adicionales"
+              value={`${summary.extraCountries.join(', ')} — contexto informativo, sin integración fiscal en v1`}
+              icon="🌎"
+              warn
+            />
+          )}
+
+          <div style={{ borderTop: '0.5px solid var(--border)', marginTop: 14, paddingTop: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 10 }}>
+              {summary.moduleCount} módulos seleccionados
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {summary.modules.map(m => (
+                <span key={m} style={{
+                  padding: '3px 10px', background: 'var(--accent-bg)',
+                  border: '0.5px solid var(--accent-border)', borderRadius: 20,
+                  fontSize: 12, color: 'var(--text-accent)'
+                }}>{m}</span>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ borderTop: '0.5px solid var(--border)', marginTop: 14, paddingTop: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>
+              Entidad principal: {summary.mainEntity}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+              {summary.states.map((s, i) => (
+                <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ padding: '2px 10px', background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 12, fontSize: 12, color: 'var(--text-2)' }}>{s}</span>
+                  {i < summary.states.length - 1 && <span style={{ color: 'var(--text-3)', fontSize: 14 }}>→</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
+            ✅ Al confirmar, el agente de desarrollo recibirá instrucciones para construir este sistema
+            tal como está descrito arriba. Si algo no refleja tu negocio, vuelve y ajústalo antes de continuar.
+          </div>
+        </div>
+
+        <div className="btn-row">
+          <button className="btn btn-secondary" onClick={onBack}>← Ajustar módulos</button>
+          <button className="btn btn-primary btn-lg" onClick={() => setConfirmed(true)}>
+            Confirmar y generar documentación →
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── RESULT SCREEN ────────────────────────────────────────────────────────
+  const wordCount = result.srs.split(/\s+/).length
+  const lineCount = result.srs.split('\n').length
 
   return (
     <div>
@@ -42,58 +113,45 @@ export default function StepResult({ data, onBack, onRestart }) {
           <span className="badge-ready">✓ Lista</span>
         </div>
         <p className="step-sub" style={{ marginTop: 6 }}>
-          {subLabel || industryData?.label} · {countryData?.label} · {data.selectedModules.length} módulos
-          · ~{wordCount.toLocaleString()} palabras · {lineCount} líneas · 2 archivos generados
+          {summary.business} · {summary.moduleCount} módulos · ~{wordCount.toLocaleString()} palabras · 2 archivos
         </p>
-      </div>
-
-      <div className="context-pill">
-        <span>{industryData?.icon}</span>
-        <span>{industryData?.standards?.slice(0, 2).join(' · ')} · {countryData?.tax}</span>
       </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
         {[
-          { id: 'srs', label: '📄 SRS.md — Para humanos y agentes' },
-          { id: 'claude', label: '🤖 CLAUDE.md — Solo para el agente dev' },
+          { id: 'srs', label: '📄 SRS.md' },
+          { id: 'claude', label: '🤖 CLAUDE.md' },
         ].map(tab => (
-          <button
-            key={tab.id}
-            className={`sc-tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '6px 14px', borderRadius: 20, border: '0.5px solid var(--border-strong)',
-              fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-              background: activeTab === tab.id ? 'var(--bg-accent)' : 'var(--surface-1)',
-              color: activeTab === tab.id ? 'var(--text-accent)' : 'var(--text-secondary)'
-            }}
-          >
-            {tab.label}
-          </button>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+            padding: '6px 14px', borderRadius: 20, border: '0.5px solid var(--border-strong)',
+            fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+            background: activeTab === tab.id ? 'var(--bg-accent)' : 'var(--surface-1)',
+            color: activeTab === tab.id ? 'var(--text-accent)' : 'var(--text-secondary)'
+          }}>{tab.label}</button>
         ))}
       </div>
 
-      <div className="markdown-preview" role="region" aria-label={activeTab === 'srs' ? 'Vista previa SRS' : 'Vista previa CLAUDE.md'}>
-        {activeContent}
+      <div className="markdown-preview" role="region">
+        {activeTab === 'srs' ? result.srs : result.claudeMd}
       </div>
 
-      <div className="section-label">Exportar documentación</div>
+      <div className="section-label">Exportar</div>
       <div className="export-grid">
-        <button className="export-btn" onClick={() => download(srs, `SRS-${fname}.md`)}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
-          Descargar SRS.md
+        <button className="export-btn" onClick={() => download(result.srs, `SRS-${fname}.md`)}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+          SRS.md
         </button>
-        <button className="export-btn" onClick={() => download(claudeMd, 'CLAUDE.md')}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Descargar CLAUDE.md
+        <button className="export-btn" onClick={() => download(result.claudeMd, 'CLAUDE.md')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          CLAUDE.md
         </button>
-        <button className="export-btn" onClick={() => { download(srs, `SRS-${fname}.md`); setTimeout(() => download(claudeMd, 'CLAUDE.md'), 300) }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Descargar ambos
+        <button className="export-btn" onClick={() => { download(result.srs, `SRS-${fname}.md`); setTimeout(() => download(result.claudeMd, 'CLAUDE.md'), 300) }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Ambos archivos
         </button>
         <button className="export-btn" onClick={copyActive}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           Copiar activo
         </button>
       </div>
@@ -102,15 +160,30 @@ export default function StepResult({ data, onBack, onRestart }) {
         <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Cómo usar con un agente dev</p>
         <ol style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.8, paddingLeft: 18, margin: 0 }}>
           <li>Descarga <strong>ambos archivos</strong> y colócalos en la raíz de tu proyecto</li>
-          <li>En Claude Code escribe: <code style={{ background: 'var(--surface)', padding: '1px 6px', borderRadius: 4, fontSize: 12 }}>lee CLAUDE.md y SRS.md y construye el sistema</code></li>
-          <li>En Cursor: agrega ambos al contexto y usa el mismo prompt</li>
-          <li>El agente usará el ERD del SRS para generar la base de datos y el CLAUDE.md para las convenciones de código</li>
+          <li>En <strong>Claude Code:</strong> <code style={{ background: 'var(--surface)', padding: '1px 6px', borderRadius: 4, fontSize: 12 }}>lee CLAUDE.md y SRS.md y construye el sistema</code></li>
+          <li>En <strong>Cursor:</strong> agrega ambos archivos al contexto con el mismo prompt</li>
+          <li>En <strong>Windsurf:</strong> usa Cascade y adjunta ambos archivos al inicio de la sesión</li>
         </ol>
       </div>
 
       <div className="btn-row">
-        <button className="btn btn-secondary" onClick={onBack}>← Editar módulos</button>
+        <button className="btn btn-secondary" onClick={() => setConfirmed(false)}>← Ver resumen</button>
         <button className="btn btn-ghost" onClick={onRestart}>Nuevo documento</button>
+      </div>
+    </div>
+  )
+}
+
+function SummaryRow({ label, value, icon, warn }) {
+  return (
+    <div style={{
+      display: 'flex', gap: 10, padding: '8px 0',
+      borderBottom: '0.5px solid var(--border)', alignItems: 'flex-start'
+    }}>
+      <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 1 }}>{label}</div>
+        <div style={{ fontSize: 13, color: warn ? '#f59e0b' : 'var(--text-primary)', fontWeight: warn ? 400 : 400 }}>{value}</div>
       </div>
     </div>
   )

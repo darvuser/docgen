@@ -12,23 +12,37 @@ const STEPS = [
   { id: 3, label: 'Documento' },
 ]
 
+const INITIAL = {
+  prompt: '',
+  country: '',
+  extraCountries: [],
+  size: '',
+  industry: '',
+  detectedIndustry: null,
+  subIndustry: '',
+  customSubIndustry: '',
+  selectedModules: [],
+  customModules: [],
+  answers: {},
+  brandColor: '',
+  brandLogo: '',
+}
+
 export default function App() {
   const [step, setStep] = useState(0)
-  const [data, setData] = useState({
-    prompt: '',
-    country: '',
-    size: '',
-    industry: '',
-    subIndustry: '',
-    selectedModules: [],
-    answers: {},
-  })
+  const [data, setData] = useState(INITIAL)
 
   function update(fields) {
     setData(prev => ({ ...prev, ...fields }))
   }
 
-  function next() { setStep(s => Math.min(s + 1, 3)) }
+  // Auto-apply detected industry when moving to step 2
+  function next() {
+    if (step === 0 && data.detectedIndustry && !data.industry) {
+      update({ industry: data.detectedIndustry })
+    }
+    setStep(s => Math.min(s + 1, 3))
+  }
   function back() { setStep(s => Math.max(s - 1, 0)) }
   function goTo(n) { if (n <= step) setStep(n) }
 
@@ -65,6 +79,7 @@ export default function App() {
               </button>
             ))}
           </nav>
+          <div style={{ width: 80 }} />
         </div>
       </header>
 
@@ -72,7 +87,7 @@ export default function App() {
         {step === 0 && <StepPrompt data={data} update={update} onNext={next} />}
         {step === 1 && <StepClassify data={data} update={update} onNext={next} onBack={back} />}
         {step === 2 && <StepModules data={data} update={update} onNext={next} onBack={back} />}
-        {step === 3 && <StepResult data={data} onBack={back} onRestart={() => { setStep(0); setData({ prompt: '', country: '', size: '', industry: '', subIndustry: '', selectedModules: [], answers: {} }) }} />}
+        {step === 3 && <StepResult data={data} onBack={back} onRestart={() => { setStep(0); setData(INITIAL) }} />}
       </main>
     </div>
   )

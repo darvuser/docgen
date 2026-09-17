@@ -150,7 +150,7 @@ ${techTerms}`
 
 // ─── MEJORA 6: CLAUDE.md / archivo de instrucciones para el agente ───────────
 
-function buildCLAUDEmd({ prompt, countryData, sizeData, industryData, subLabel, dk, selectedModules, moduleList, standards, answers }) {
+function buildCLAUDEmd({ prompt, countryData, sizeData, industryData, subLabel, dk, selectedModules, moduleList, standards, answers, brandColor, brandLogo, extraCountryLabels }) {
   const rolesList = dk.roles.join(', ')
   const entityList = dk.erd.entities.map(e => e.name).join(', ')
   const mainFlow = Object.values(dk.processFlows)[0]
@@ -246,13 +246,39 @@ ${answerBlock}
 └── CLAUDE.md             # Este archivo
 \`\`\`
 
+## Diseño visual
+
+${brandColor ? `- **Color principal de marca:** \`${brandColor}\` — usar en header, botones primarios y acentos` : '- Sin color de marca definido — usar azul profesional \`#2563eb\` como color base'}
+${brandLogo ? `- **Logo del cliente:** ${brandLogo} — incluir en header y pantalla de login` : '- Sin logo definido — usar el nombre del negocio como texto en el header'}
+- Interfaz minimalista, limpia, orientada a usuarios no técnicos (nivel básico)
+- Tailwind CSS para todos los estilos del frontend
+
+${(extraCountryLabels || []).length > 0 ? `## Operación multi-país
+
+La empresa opera en **${countryData.label}** (sede principal) y también en: **${extraCountryLabels.join(', ')}**.
+
+- Implementar facturación electrónica SOLO para ${countryData.label} (${countryData.tax}) en esta versión
+- Los países adicionales se documentan como contexto — NO requieren integración fiscal en v1
+- Moneda base: ${countryData.currency} — los otros países se tratan como contexto informativo
+- Consultar con experto legal local antes de operar en los países adicionales
+
+` : ''}## Validación con el cliente antes de empezar
+
+Antes de escribir la primera línea de código, confirma estos tres puntos con el cliente:
+
+1. ¿Los estados de **${dk.mainEntity}** son correctos? (${Object.values(dk.processFlows)[0]?.states?.join(' → ')})
+2. ¿Los ${moduleList.length} módulos seleccionados cubren todos los procesos críticos del negocio?
+3. ¿Las reglas de negocio de la sección anterior reflejan cómo opera realmente la empresa?
+
 ## Cómo empezar
 
-1. Lee el SRS.md completo
-2. Crea el schema de base de datos basado en el ERD de la sección 6.3
-3. Implementa autenticación y roles
-4. Construye los módulos en el orden de prioridad de arriba
-5. Cada módulo debe tener: listado, formulario de creación, edición y eliminación (soft)
+1. Lee el SRS.md completo antes de cualquier otra cosa
+2. Genera el schema de base de datos basado en el ERD de la sección 6.3 del SRS.md
+3. Implementa autenticación JWT y sistema de roles: ${rolesList}
+4. Construye los módulos en el orden de prioridad listado arriba
+5. Cada módulo debe tener: listado con búsqueda y filtros, formulario de creación, edición y eliminación (soft delete)
+6. Aplica los colores y logo de marca en el layout principal
+7. Al terminar, revisa que todas las reglas de negocio estén implementadas en el backend
 `
 }
 
@@ -268,33 +294,76 @@ function buildScreens(dk) {
   ).join('\n\n')
 }
 
-// ─── GENERADOR PRINCIPAL ──────────────────────────────────────────────────────
+// ─── RESUMEN EN LENGUAJE NATURAL (antes de exportar) ─────────────────────────
 
-export function generateSRS({ prompt, country, size, industry, subIndustry, selectedModules, answers }) {
+export function generateSummary({ prompt, country, size, industry, subIndustry, customSubIndustry, selectedModules, customModules, answers, extraCountries }) {
   const countryData  = COUNTRIES.find(c => c.value === country) || COUNTRIES[0]
   const sizeData     = SIZES.find(s => s.value === size) || SIZES[1]
   const industryData = INDUSTRIES.find(i => i.isic === industry)
-  const subLabel     = industryData?.subIndustries.find(s => s.value === subIndustry)?.label || 'General'
+  const subLabel     = subIndustry === 'other'
+    ? (customSubIndustry || 'Personalizado')
+    : (industryData?.subIndustries?.find(s => s.value === subIndustry)?.label || 'General')
+  const dk           = getDomainKnowledge(industry)
+  const moduleList   = selectedModules.map(id => ALL_MODULES[id]).filter(Boolean)
+  const allMods      = [...moduleList, ...(customModules || [])]
+  const mainFlow     = Object.values(dk.processFlows)[0]
+  const stateCount   = mainFlow?.states?.length || 0
+  const concurrentUsers = size === 'micro' ? '3' : size === 'small' ? '10' : size === 'medium' ? '30' : '+100'
+  const extraCountryLabels = (extraCountries || [])
+    .map(c => COUNTRIES.find(co => co.value === c)?.label)
+    .filter(Boolean)
+
+  return {
+    business: `${subLabel} en ${countryData.label}`,
+    size: sizeData.label,
+    modules: allMods.map(m => m.label),
+    moduleCount: allMods.length,
+    mainEntity: dk.mainEntity,
+    stateCount,
+    states: mainFlow?.states || [],
+    users: concurrentUsers,
+    tax: countryData.tax,
+    currency: countryData.currency,
+    standards: industryData?.standards || [],
+    extraCountries: extraCountryLabels,
+    roles: dk.roles,
+    answers,
+  }
+}
+
+// ─── GENERADOR PRINCIPAL ──────────────────────────────────────────────────────
+
+export function generateSRS({ prompt, country, extraCountries, size, industry, subIndustry, customSubIndustry, selectedModules, customModules, answers, brandColor, brandLogo }) {
+  const countryData  = COUNTRIES.find(c => c.value === country) || COUNTRIES[0]
+  const sizeData     = SIZES.find(s => s.value === size) || SIZES[1]
+  const industryData = INDUSTRIES.find(i => i.isic === industry)
+  const subLabel     = subIndustry === 'other'
+    ? (customSubIndustry || 'Personalizado')
+    : (industryData?.subIndustries?.find(s => s.value === subIndustry)?.label || 'General')
   const dk           = getDomainKnowledge(industry)
   const standards    = industryData?.standards?.join(', ') || 'ISO 9001'
   const moduleList   = selectedModules.map(id => ALL_MODULES[id]).filter(Boolean)
+  const allModules   = [...moduleList, ...(customModules || [])]
   const concurrentUsers = size === 'micro' ? '3' : size === 'small' ? '10' : size === 'medium' ? '30' : '100+'
+  const extraCountryLabels = (extraCountries || [])
+    .map(c => COUNTRIES.find(co => co.value === c)?.label).filter(Boolean)
 
-  const groupedModules = moduleList.reduce((acc, mod) => {
-    if (!acc[mod.category]) acc[mod.category] = []
-    acc[mod.category].push(mod)
+  const groupedModules = allModules.reduce((acc, mod) => {
+    const cat = mod.category || 'Personalizado'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(mod)
     return acc
   }, {})
 
   const modulesTable = Object.entries(groupedModules).map(([cat, mods]) => {
-    return `### ${cat}\n\n| Módulo | Descripción | Prioridad |\n|--------|-------------|----------|\n${mods.map(m => `| ${m.label} | ${m.desc} | Alta |`).join('\n')}`
+    return `### ${cat}\n\n| Módulo | Descripción | Prioridad |\n|--------|-------------|----------|\n${mods.map(m => `| ${m.label} | ${m.desc} | ${m.custom ? 'Media' : 'Alta'} |`).join('\n')}`
   }).join('\n\n')
 
   const answersBlock = answers && Object.keys(answers).length > 0
     ? Object.entries(answers).map(([q, a]) => `- **${q}:** ${a}`).join('\n')
     : '- Sin respuestas adicionales'
 
-  const claudeMd = buildCLAUDEmd({ prompt, countryData, sizeData, industryData, subLabel, dk, selectedModules, moduleList, standards, answers })
+  const claudeMd = buildCLAUDEmd({ prompt, countryData, sizeData, industryData, subLabel, dk, selectedModules, moduleList: allModules, standards, answers, brandColor, brandLogo, extraCountryLabels })
 
   const srs = `# Documento de Especificación de Requerimientos de Software (SRS)
 ## ${subLabel} — Sistema de Gestión Empresarial
@@ -333,9 +402,10 @@ Usuarios del sistema y sus roles: **${dk.roles.join(', ')}**.
 
 ### 1.4 Contexto regulatorio
 
+- **País principal (sede legal):** ${countryData.label}
 - **Facturación electrónica:** Integración obligatoria con ${countryData.tax} (moneda: ${countryData.currency})
 - **Estándares de industria aplicables:** ${standards}
-- **Normativa de protección de datos:** Ley de protección de datos vigente en ${countryData.label}
+- **Normativa de protección de datos:** Ley de protección de datos vigente en ${countryData.label}${extraCountryLabels.length > 0 ? `\n\n> ⚠️ **Operación multi-país:** La empresa también opera en ${extraCountryLabels.join(', ')}. La documentación técnica sigue las reglas de ${countryData.label} como sede principal. Cada país adicional puede tener requisitos fiscales, laborales y de protección de datos distintos — se recomienda revisión legal local antes de operar en esos mercados.` : ''}
 
 ---
 
