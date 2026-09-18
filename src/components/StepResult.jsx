@@ -39,7 +39,7 @@ export default function StepResult({ data, onBack, onRestart }) {
         </div>
 
         <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '.05em', fontSize: 11 }}>Tu sistema en lenguaje simple</div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-2)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '.05em' }}>Tu sistema en lenguaje simple</div>
 
           <SummaryRow label="Tipo de negocio" value={summary.business} icon="🏢" />
           <SummaryRow label="Tamaño" value={summary.size} icon="👥" />

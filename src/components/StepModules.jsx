@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { INDUSTRIES, ALL_MODULES, COUNTRIES } from '../data/industries.js'
+import { recommendModules } from '../utils/moduleRecommender.js'
 
 function getContextQuestions(industry, subIndustry, country, size, modules) {
   const countryData = COUNTRIES.find(c => c.value === country)
@@ -96,6 +97,7 @@ function getContextQuestions(industry, subIndustry, country, size, modules) {
 export default function StepModules({ data, update, onNext, onBack }) {
   const industryData = INDUSTRIES.find(i => i.isic === data.industry)
   const [answers, setAnswers] = useState(data.answers || {})
+  const recommended = useMemo(() => recommendModules(data.prompt), [data.prompt])
   const [customModule, setCustomModule] = useState('')
   const [customModules, setCustomModules] = useState(data.customModules || [])
   const [showCustomInput, setShowCustomInput] = useState(false)
@@ -177,10 +179,16 @@ export default function StepModules({ data, update, onNext, onBack }) {
         <span>{subLabel || industryData?.label} · {countryLabel} · {sizeLabel}</span>
       </div>
 
+      {recommended.length > 0 && (
+        <div style={{ marginBottom: 14, padding: '10px 14px', background: 'var(--accent-bg)', border: '0.5px solid var(--accent-border)', borderRadius: 8, fontSize: 13, color: 'var(--text-accent)' }}>
+          ⭐ Basado en tu descripción, marcamos con <strong>"Recomendado"</strong> los módulos que mejor aplican a lo que describes. Tú decides cuáles activar.
+        </div>
+      )}
+
       <div className="section-label">Módulos esenciales para tu sector</div>
       <div className="modules-grid">
         {coreModules.map(mod => (
-          <ModCard key={mod.id} mod={mod} selected={data.selectedModules.includes(mod.id)} onToggle={() => toggleModule(mod.id)} />
+          <ModCard key={mod.id} mod={mod} selected={data.selectedModules.includes(mod.id)} onToggle={() => toggleModule(mod.id)} isRecommended={recommended.includes(mod.id)} />
         ))}
       </div>
 
@@ -189,7 +197,7 @@ export default function StepModules({ data, update, onNext, onBack }) {
           <div className="section-label">Módulos opcionales</div>
           <div className="modules-grid">
             {optModules.map(mod => (
-              <ModCard key={mod.id} mod={mod} selected={data.selectedModules.includes(mod.id)} onToggle={() => toggleModule(mod.id)} />
+              <ModCard key={mod.id} mod={mod} selected={data.selectedModules.includes(mod.id)} onToggle={() => toggleModule(mod.id)} isRecommended={recommended.includes(mod.id)} />
             ))}
           </div>
         </>
@@ -361,17 +369,23 @@ export default function StepModules({ data, update, onNext, onBack }) {
   )
 }
 
-function ModCard({ mod, selected, onToggle }) {
+function ModCard({ mod, selected, onToggle, isRecommended }) {
   return (
     <button
       className={`mod-card ${selected ? 'selected' : ''}`}
       onClick={onToggle}
       aria-pressed={selected}
       title={mod.desc}
+      style={isRecommended && !selected ? { borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' } : {}}
     >
       <span className="mod-icon" aria-hidden="true">{mod.icon}</span>
       <div className="mod-body">
-        <div className="mod-name">{mod.label}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          <div className="mod-name" style={{ marginBottom: 0 }}>{mod.label}</div>
+          {isRecommended && !selected && (
+            <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: 'var(--text-accent)', color: '#fff', fontWeight: 500, flexShrink: 0 }}>⭐ Recomendado</span>
+          )}
+        </div>
         <div className="mod-desc">{mod.desc}</div>
       </div>
       <div className="mod-check" aria-hidden="true">

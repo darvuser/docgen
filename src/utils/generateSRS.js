@@ -396,7 +396,7 @@ Para el agente dev: existe un archivo **CLAUDE.md** complementario con instrucci
 
 ### 1.3 Alcance
 
-El sistema cubrirá **${moduleList.length} módulos funcionales** para una empresa del sector **${industryData?.label}** (${subLabel}) operando en **${countryData.label}**, con **${sizeData.label}**.
+El sistema cubrirá **${allModules.length} módulos funcionales** para una empresa del sector **${industryData?.label}** (${subLabel}) operando en **${countryData.label}**, con **${sizeData.label}**.
 
 Usuarios del sistema y sus roles: **${dk.roles.join(', ')}**.
 
@@ -421,9 +421,9 @@ ${moduleList.map((m, i) => `${i + 1}. **${m.label}:** ${m.desc}`).join('\n')}
 
 ### 2.3 Usuarios del sistema
 
-| Rol | Responsabilidades principales | Nivel técnico esperado |
-|-----|-------------------------------|------------------------|
-${dk.roles.map(r => `| ${r} | Operación del sistema en su área | Básico a medio |`).join('\n')}
+| Rol | Responsabilidades principales | Permisos clave | Nivel técnico |
+|-----|-------------------------------|----------------|---------------|
+${(dk.roleDetails || dk.roles.map(r => ({ role: r, responsibilities: 'Operación del sistema en su área', permissions: 'Según configuración de roles' }))).map(r => `| ${r.role} | ${r.responsibilities} | ${r.permissions} | Básico a medio |`).join('\n')}
 
 ### 2.4 Restricciones generales
 
@@ -583,16 +583,28 @@ ${answersBlock}
 
 ## 13. Criterios de aceptación globales
 
-- [ ] Todos los módulos listados implementados y probados con datos reales
+### 13.1 Criterios del sistema completo
+- [ ] Todos los módulos listados implementados y probados con datos reales del cliente
 - [ ] Facturación electrónica funcional y validada con ${countryData.tax}
-- [ ] Todos los flujos de estado de la sección 3 implementados correctamente
-- [ ] Todas las reglas de negocio de la sección 4 validadas en el backend
-- [ ] Sistema de roles y permisos implementado y probado por rol
-- [ ] Pruebas de carga para ${concurrentUsers} usuarios simultáneos sin degradación
-- [ ] Log de auditoría funcionando para todas las operaciones críticas
-- [ ] ERD implementado fielmente en la base de datos de producción
-- [ ] Manual de usuario entregado
+- [ ] Todos los flujos de estado de la sección 3 implementados y probados por rol
+- [ ] Todas las reglas de negocio de la sección 4 validadas en el backend (no solo frontend)
+- [ ] Matriz de permisos por rol implementada: cada rol solo puede hacer lo que la sección 2.3 define
+- [ ] Pruebas de carga superadas: ${concurrentUsers} usuarios simultáneos sin degradación
+- [ ] Log de auditoría registrando: usuario, acción, fecha, IP y datos anteriores para operaciones críticas
+- [ ] ERD implementado fielmente: todas las entidades, relaciones y ENUMs de sección 8 presentes
+- [ ] Soft delete implementado en todas las tablas (columna deleted_at)
+- [ ] Multi-tenant validado: un usuario no puede ver datos de otra empresa
+- [ ] Manual de usuario entregado en español
 - [ ] Capacitación al equipo (mínimo 4 horas)
+
+### 13.2 Criterios por módulo
+
+${allModules.map(m => `**${m.label}**
+- [ ] Listado con búsqueda por texto y filtros por estado o categoría
+- [ ] Formulario de creación con validaciones en tiempo real
+- [ ] Edición sin perder datos previos
+- [ ] Eliminación con soft delete y confirmación
+- [ ] Exportación a PDF o Excel del listado`).join('\n\n')}
 
 ---
 

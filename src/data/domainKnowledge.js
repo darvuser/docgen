@@ -10,6 +10,12 @@ export const DOMAIN_KNOWLEDGE = {
   G: {
     mainEntity: 'Venta',
     roles: ['Vendedor', 'Jefe de bodega', 'Gerente', 'Contador'],
+    roleDetails: [
+      { role: 'Vendedor', responsibilities: 'Registrar ventas en POS, atender clientes, emitir recibos y gestionar devoluciones simples', permissions: 'Crear y completar ventas · Ver inventario · Consultar clientes · No puede anular ni aplicar descuentos >20%' },
+      { role: 'Jefe de bodega', responsibilities: 'Controlar entradas y salidas de inventario, recibir compras, hacer conteos de inventario y gestionar proveedores', permissions: 'CRUD inventario · Crear y recibir órdenes de compra · Ver reportes de stock · No puede anular ventas' },
+      { role: 'Gerente', responsibilities: 'Supervisar operaciones, aprobar descuentos y anulaciones, revisar reportes y tomar decisiones estratégicas', permissions: 'Acceso completo a todos los módulos · Anular ventas y órdenes · Configurar precios y límites de crédito · Ver todos los reportes' },
+      { role: 'Contador', responsibilities: 'Gestionar facturación electrónica, conciliar cuentas por cobrar y pagar, exportar reportes fiscales', permissions: 'Facturación electrónica · Cuentas por cobrar y pagar · Reportes financieros · Solo lectura en ventas e inventario' },
+    ],
     processFlows: {
       venta: {
         name: 'Ciclo de venta en mostrador',
@@ -106,6 +112,12 @@ export const DOMAIN_KNOWLEDGE = {
   H: {
     mainEntity: 'Orden de transporte',
     roles: ['Despachador', 'Conductor', 'Gerente de operaciones', 'Contador'],
+    roleDetails: [
+      { role: 'Despachador', responsibilities: 'Crear y gestionar órdenes de transporte, asignar conductores y vehículos, generar manifiestos de carga y coordinar rutas del día', permissions: 'CRUD órdenes · Asignar conductor y vehículo · Generar manifiesto · Ver disponibilidad de flota · No puede cancelar órdenes asignadas' },
+      { role: 'Conductor', responsibilities: 'Confirmar salida, registrar posición GPS, marcar entrega con firma o foto del destinatario y reportar incidentes en ruta', permissions: 'Ver sus órdenes asignadas · Confirmar salida y llegada · Registrar evidencia de entrega · Solo lectura en el resto del sistema' },
+      { role: 'Gerente de operaciones', responsibilities: 'Monitorear flota en tiempo real, aprobar cotizaciones, cancelar órdenes, revisar KPIs y gestionar alertas de vencimientos legales', permissions: 'Acceso completo · Cancelar órdenes asignadas · Aprobar o rechazar cotizaciones · Ver reportes de todos los conductores y vehículos' },
+      { role: 'Contador', responsibilities: 'Emitir facturas por órdenes entregadas, gestionar cuentas por cobrar de clientes y exportar reportes fiscales al SAT', permissions: 'Facturación electrónica · Cuentas por cobrar · Reportes financieros · Solo lectura en operaciones' },
+    ],
     processFlows: {
       orden: {
         name: 'Ciclo de orden de transporte',
@@ -203,6 +215,13 @@ export const DOMAIN_KNOWLEDGE = {
   C: {
     mainEntity: 'Orden de producción',
     roles: ['Operario', 'Jefe de producción', 'Jefe de calidad', 'Gerente', 'Vendedor'],
+    roleDetails: [
+      { role: 'Operario', responsibilities: 'Ejecutar órdenes de producción, registrar materiales consumidos y reportar avance o incidentes en línea', permissions: 'Ver sus órdenes asignadas · Registrar consumo de materiales · Reportar avance · No puede crear ni cerrar órdenes' },
+      { role: 'Jefe de producción', responsibilities: 'Crear y planificar órdenes de producción, verificar disponibilidad de materiales y supervisar el avance de la línea', permissions: 'CRUD órdenes de producción · Ver inventario de materias primas · Enviar lotes a control de calidad · Programar producción' },
+      { role: 'Jefe de calidad', responsibilities: 'Inspeccionar lotes terminados, aprobar o rechazar producción con evidencia y registrar no conformidades', permissions: 'Aprobar y rechazar lotes · Registrar inspecciones · Ver historial de calidad por producto · Solo lectura en producción y materiales' },
+      { role: 'Gerente', responsibilities: 'Revisar KPIs de producción, costos, rendimientos y tomar decisiones de capacidad y compras', permissions: 'Acceso completo a todos los módulos · Ver reportes de costos y eficiencia · Aprobar compras de materiales' },
+      { role: 'Vendedor', responsibilities: 'Consultar disponibilidad de producto terminado, registrar pedidos de clientes y coordinar fechas de entrega', permissions: 'Ver stock de producto terminado · Crear pedidos de cliente · Ver historial de entregas · No accede a producción interna' },
+    ],
     processFlows: {
       produccion: {
         name: 'Ciclo de orden de producción',
@@ -277,6 +296,12 @@ export const DOMAIN_KNOWLEDGE = {
   I: {
     mainEntity: 'Comanda',
     roles: ['Mesero', 'Cajero', 'Cocinero', 'Administrador'],
+    roleDetails: [
+      { role: 'Mesero', responsibilities: 'Tomar pedidos por mesa desde el celular, enviar comandas a cocina, registrar modificaciones y entregar órdenes listas', permissions: 'Crear y modificar comandas abiertas · Ver estado de mesas · Solicitar cuenta · No puede cerrar ni anular sin supervisión' },
+      { role: 'Cocinero', responsibilities: 'Ver comandas entrantes en display de cocina, actualizar estado de cada ítem y alertar cuando un plato está listo', permissions: 'Ver comandas asignadas a cocina · Marcar ítems como listos · Ver tiempos de espera · Solo lectura de menú e inventario' },
+      { role: 'Cajero', responsibilities: 'Cerrar mesas, procesar pagos en efectivo o tarjeta, dividir cuentas y emitir factura o recibo al cliente', permissions: 'Cerrar comandas · Procesar pagos · Emitir facturas · Aplicar descuentos aprobados · Ver historial de ventas del día' },
+      { role: 'Administrador', responsibilities: 'Gestionar menú y precios, configurar mesas, revisar ventas del día, anular comandas y administrar usuarios', permissions: 'Acceso completo · Anular comandas · Configurar menú y precios · Ver reportes de ventas y costos · Gestionar usuarios' },
+    ],
     processFlows: {
       comanda: {
         name: 'Ciclo de atención en mesa',
@@ -338,6 +363,12 @@ export const DOMAIN_KNOWLEDGE = {
   M: {
     mainEntity: 'Proyecto',
     roles: ['Consultor', 'Gerente de proyecto', 'Director', 'Administrativo'],
+    roleDetails: [
+      { role: 'Consultor', responsibilities: 'Ejecutar tareas del proyecto, registrar horas trabajadas diariamente y entregar productos según el alcance acordado', permissions: 'Ver proyectos asignados · Registrar horas · Actualizar estado de tareas · Subir entregables · No puede ver costos ni facturación' },
+      { role: 'Gerente de proyecto', responsibilities: 'Planificar y supervisar el proyecto, asignar tareas al equipo, controlar presupuesto y horas, y gestionar la comunicación con el cliente', permissions: 'CRUD tareas y asignaciones · Ver horas de su equipo · Ver presupuesto vs. real · Aprobar horas · No puede facturar' },
+      { role: 'Director', responsibilities: 'Aprobar propuestas comerciales, monitorear portafolio de proyectos, autorizar gastos fuera de presupuesto y cerrar proyectos', permissions: 'Acceso completo · Aprobar o rechazar propuestas · Ver todos los proyectos y sus finanzas · Cancelar proyectos' },
+      { role: 'Administrativo', responsibilities: 'Emitir facturas por hitos completados, gestionar cuentas por cobrar y preparar reportes financieros del portafolio', permissions: 'Facturación · Cuentas por cobrar · Reportes financieros · Solo lectura en proyectos y tareas' },
+    ],
     processFlows: {
       proyecto: {
         name: 'Ciclo de proyecto de consultoría',
@@ -398,6 +429,11 @@ export const DOMAIN_KNOWLEDGE = {
   Q: {
     mainEntity: 'Cita',
     roles: ['Recepcionista', 'Médico / Profesional', 'Paciente', 'Administrador'],
+    roleDetails: [
+      { role: 'Recepcionista', responsibilities: 'Agendar, confirmar y cancelar citas, registrar llegada del paciente y gestionar la sala de espera', permissions: 'CRUD citas · Registrar llegadas · Buscar pacientes · Ver agenda del día · No accede a historia clínica ni facturación' },
+      { role: 'Médico / Profesional', responsibilities: 'Atender consultas, registrar notas de evolución en la historia clínica, emitir prescripciones y ordenar exámenes', permissions: 'Ver y editar historia clínica de sus pacientes · Emitir recetas · Solicitar exámenes · Ver su propia agenda · No accede a facturación' },
+      { role: 'Administrador', responsibilities: 'Gestionar tarifas, revisar ingresos, procesar pagos y facturas, y administrar usuarios y configuración del sistema', permissions: 'Acceso completo · Configurar tarifas y convenios · Procesar pagos y facturación · Ver reportes financieros y de ocupación' },
+    ],
     processFlows: {
       cita: {
         name: 'Ciclo de atención al paciente',
@@ -458,6 +494,12 @@ export const DOMAIN_KNOWLEDGE = {
   P: {
     mainEntity: 'Matrícula',
     roles: ['Secretaria académica', 'Docente', 'Coordinador', 'Padre de familia'],
+    roleDetails: [
+      { role: 'Secretaria académica', responsibilities: 'Registrar matrículas, gestionar documentos de estudiantes, controlar pagos de mensualidades y emitir constancias', permissions: 'CRUD matrículas y estudiantes · Registrar pagos · Emitir constancias · Ver notas en modo lectura · No puede modificar calificaciones' },
+      { role: 'Docente', responsibilities: 'Ingresar notas por bimestre, registrar asistencia y enviar comunicados a padres de familia de su sección', permissions: 'Ingresar y editar notas de sus cursos · Registrar asistencia · Enviar comunicados · Ver lista de sus estudiantes' },
+      { role: 'Coordinador', responsibilities: 'Supervisar rendimiento académico, aprobar retiros y traslados, revisar estadísticas de asistencia y promover estudiantes', permissions: 'Acceso completo al módulo académico · Aprobar retiros y cambios · Ver estadísticas de todos los grados · Configurar períodos y ponderaciones' },
+      { role: 'Padre de familia', responsibilities: 'Consultar notas, asistencia y comunicados de su hijo, y ver el estado de pagos pendientes', permissions: 'Solo lectura: notas, asistencia y comunicados de sus hijos · Ver sus facturas y saldo pendiente · Sin acceso a datos de otros estudiantes' },
+    ],
     processFlows: {
       matricula: {
         name: 'Ciclo de matrícula',
@@ -520,6 +562,12 @@ export const DOMAIN_KNOWLEDGE = {
   F: {
     mainEntity: 'Proyecto de obra',
     roles: ['Maestro de obras', 'Residente de obra', 'Director de proyectos', 'Contador'],
+    roleDetails: [
+      { role: 'Maestro de obras', responsibilities: 'Registrar avance diario por actividad, reportar consumo de materiales y mano de obra, y subir evidencias fotográficas', permissions: 'Ver actividades de su frente · Registrar avance y consumos · Subir fotos · No puede modificar presupuesto ni aprobar pagos' },
+      { role: 'Residente de obra', responsibilities: 'Supervisar avance global, validar reportes del maestro, solicitar compras de materiales y preparar actas de avance', permissions: 'CRUD actividades y avances · Solicitar compras · Preparar actas · Ver presupuesto vs. real · No puede aprobar pagos a subcontratistas' },
+      { role: 'Director de proyectos', responsibilities: 'Aprobar actas de avance y pagos, monitorear portafolio de obras, autorizar adiciones de contrato y revisar KPIs financieros', permissions: 'Acceso completo · Aprobar actas y pagos · Autorizar adiciones · Ver todos los proyectos y sus finanzas' },
+      { role: 'Contador', responsibilities: 'Emitir facturas por actas aprobadas, gestionar pagos a proveedores y subcontratistas, y preparar reportes fiscales', permissions: 'Facturación · Pagos a proveedores · Reportes financieros · Solo lectura en avance de obra' },
+    ],
     processFlows: {
       obra: {
         name: 'Ciclo de proyecto de construcción',
@@ -579,6 +627,11 @@ export const DOMAIN_KNOWLEDGE = {
   A: {
     mainEntity: 'Lote de cultivo',
     roles: ['Agricultor / Operario', 'Mayordomo', 'Administrador'],
+    roleDetails: [
+      { role: 'Agricultor / Operario', responsibilities: 'Registrar labores del día (aplicaciones, jornales, cosecha) en el lote asignado usando el celular desde el campo', permissions: 'Registrar aplicaciones y jornales en sus lotes · Ver instrucciones de trabajo · No puede ver costos ni reportes financieros' },
+      { role: 'Mayordomo', responsibilities: 'Supervisar operaciones diarias, asignar personal a lotes, aprobar aplicaciones de agroquímicos y registrar cosechas', permissions: 'CRUD actividades en todos los lotes · Ver inventario de insumos · Registrar cosechas · Ver reportes operativos' },
+      { role: 'Administrador', responsibilities: 'Gestionar compras de insumos, revisar costos por lote, exportar reportes de rentabilidad y cumplimiento BPA', permissions: 'Acceso completo · Ver costos y rentabilidad · Gestionar compras · Configurar trazabilidad BPA · Exportar reportes' },
+    ],
     processFlows: {
       cultivo: {
         name: 'Ciclo de cultivo',
@@ -638,6 +691,12 @@ export const DOMAIN_KNOWLEDGE = {
   DEFAULT: {
     mainEntity: 'Servicio / Orden',
     roles: ['Operador', 'Supervisor', 'Gerente', 'Contador'],
+    roleDetails: [
+      { role: 'Operador', responsibilities: 'Ejecutar órdenes de servicio asignadas, registrar avance y evidencia de finalización, y reportar incidencias', permissions: 'Ver sus órdenes asignadas · Actualizar estado · Registrar evidencia · No puede facturar ni cancelar órdenes' },
+      { role: 'Supervisor', responsibilities: 'Asignar órdenes al equipo, verificar calidad del servicio prestado y gestionar la agenda de trabajo', permissions: 'CRUD órdenes · Asignar operadores · Ver estado de todas las órdenes · Aprobar finalización · No puede facturar' },
+      { role: 'Gerente', responsibilities: 'Revisar KPIs operativos, atender escalaciones de clientes, aprobar descuentos y supervisar el desempeño del equipo', permissions: 'Acceso completo · Ver reportes de productividad · Aprobar descuentos · Cancelar órdenes · Configurar el sistema' },
+      { role: 'Contador', responsibilities: 'Facturar servicios completados, gestionar cuentas por cobrar y preparar reportes financieros periódicos', permissions: 'Facturación · Cuentas por cobrar · Reportes financieros · Solo lectura en órdenes y operaciones' },
+    ],
     processFlows: {
       servicio: {
         name: 'Ciclo de prestación de servicio',
