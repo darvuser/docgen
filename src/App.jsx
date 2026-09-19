@@ -28,6 +28,8 @@ const INITIAL = {
   brandLogo: '',
 }
 
+const APP_VERSION = '5.0.0'
+
 export default function App() {
   const [step, setStep] = useState(0)
   const [data, setData] = useState(INITIAL)
@@ -89,6 +91,11 @@ export default function App() {
         {step === 2 && <StepModules data={data} update={update} onNext={next} onBack={back} />}
         {step === 3 && <StepResult data={data} onBack={back} onRestart={() => { setStep(0); setData(INITIAL) }} />}
       </main>
+
+      <footer className="footer">
+        Docgen — Documentación funcional para software
+        <span className="footer-version">v{APP_VERSION}</span>
+      </footer>
     </div>
   )
 }

@@ -333,7 +333,7 @@ export function generateSummary({ prompt, country, size, industry, subIndustry, 
 
 // ─── GENERADOR PRINCIPAL ──────────────────────────────────────────────────────
 
-export function generateSRS({ prompt, country, extraCountries, size, industry, subIndustry, customSubIndustry, selectedModules, customModules, answers, brandColor, brandLogo }) {
+export function generateSRS({ prompt, country, extraCountries, size, industry, subIndustry, customSubIndustry, selectedModules, customModules, answers, brandColor, brandLogo, enriched }) {
   const countryData  = COUNTRIES.find(c => c.value === country) || COUNTRIES[0]
   const sizeData     = SIZES.find(s => s.value === size) || SIZES[1]
   const industryData = INDUSTRIES.find(i => i.isic === industry)
@@ -460,7 +460,7 @@ ${modulesTable}
 
 ## 6. Historias de usuario
 
-${buildUserStories(dk, moduleList, countryData)}
+${enriched?.userStories || buildUserStories(dk, moduleList, countryData)}
 
 ---
 
@@ -599,12 +599,14 @@ ${answersBlock}
 
 ### 13.2 Criterios por módulo
 
-${allModules.map(m => `**${m.label}**
+${enriched?.moduleTests || allModules.map(m => `**${m.label}**
 - [ ] Listado con búsqueda por texto y filtros por estado o categoría
 - [ ] Formulario de creación con validaciones en tiempo real
 - [ ] Edición sin perder datos previos
 - [ ] Eliminación con soft delete y confirmación
 - [ ] Exportación a PDF o Excel del listado`).join('\n\n')}
+
+${enriched?.testCases ? `---\n\n## 13.3 Casos de prueba con datos reales\n\n${enriched.testCases}` : ''}
 
 ---
 
@@ -614,7 +616,8 @@ ${buildGlossary(dk, countryData)}
 
 ---
 
-*Documento generado por Docgen · Estándar IEEE 830 / ISO/IEC 29148 · ${today()}*
+*Documento generado por Docgen v5.0 · IA: Claude Haiku · Estándar IEEE 830 / ISO/IEC 29148 · ${today()}*
+${enriched?.consistency?.issues?.length > 0 ? `\n\n> ⚠️ **Nota del revisor IA:** Se detectaron ${enriched.consistency.issues.length} punto(s) a revisar:\n${enriched.consistency.issues.map(i => `> - **${i.type}:** ${i.description} → ${i.resolution}`).join('\n')}` : ''}
 `
 
   return { srs, claudeMd }
